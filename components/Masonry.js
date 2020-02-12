@@ -1,4 +1,4 @@
-import { View, ListView, Image, Text, Dimensions } from 'react-native';
+import { View, FlatList, Image, Text, Dimensions } from 'react-native';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import Task from 'data.task';
@@ -60,11 +60,12 @@ export default class Masonry extends Component {
 	constructor(props) {
 		super(props);
 		// Assuming users don't want duplicated images, if this is not the case we can always change the diff check
-		this.ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => !containMatchingUris(r1, r2) });
+		//this.ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => !containMatchingUris(r1, r2) });
 		// This creates an array of [1..n] with values of 0, each index represent a column within the masonry
 		const columnHeights = generateColumnHeights(props.columns);
 		this.state = {
-			dataSource: this.ds.cloneWithRows([]),
+			//dataSource: this.ds.cloneWithRows([]),
+			dataSource: [],
 			dimensions: {},
 			initialOrientation: true,
 			_sortedData: [],
@@ -125,7 +126,8 @@ export default class Masonry extends Component {
 		if (bricks.length === 0) {
 			// clear and re-render
 			this.setState(state => ({
-				dataSource: state.dataSource.cloneWithRows([])
+				//dataSource: [state.dataSource.cloneWithRows([])]
+				dataSource: []
 			}));
 		}
 
@@ -147,8 +149,10 @@ export default class Masonry extends Component {
 				(resolvedBrick) => {
 					this.setState(state => {
 						const sortedData = this._insertIntoColumn(resolvedBrick, state._sortedData, state._columnHeights, columnWidth);
+						//console.warn(sortedData)
 						return {
-							dataSource: state.dataSource.cloneWithRows(sortedData),
+							//dataSource: state.dataSource.cloneWithRows(sortedData),
+							dataSource: sortedData,
 							_sortedData: sortedData,
 							_resolvedData: [...state._resolvedData, resolvedBrick]
 						};
@@ -229,24 +233,25 @@ export default class Masonry extends Component {
 	render() {
 		return (
 		<View style={{flex: 1}} onLayout={(event) => this._setParentDimensions(event)}>
-		<ListView
+		<FlatList
 			contentContainerStyle={styles.masonry__container}
-			dataSource={this.state.dataSource}
+			data={this.state.dataSource}
+            keyExtractor={(item, index) => index.toString()}
 			enableEmptySections
 			scrollRenderAheadDistance={100}
 			removeClippedSubviews={false}
 			onEndReached={this._delayCallEndReach}
 			onEndReachedThreshold={this.props.onEndReachedThreshold}
-			renderRow={(data, sectionId, rowID) => (
+			renderItem={(data, index) => (
 			<Column
-				data={data}
+				data={data.item}
 				columns={this.props.columns}
 				parentDimensions={this.state.dimensions}
 				imageContainerStyle={this.props.imageContainerStyle}
 				customImageComponent={this.props.customImageComponent}
 				customImageProps={this.props.customImageProps}
 				spacing={this.props.spacing}
-				key={`RN-MASONRY-COLUMN-${rowID}`} />
+				key={`RN-MASONRY-COLUMN-${index}`} />
 			)}
 			refreshControl={this.props.refreshControl} />
 		</View>
